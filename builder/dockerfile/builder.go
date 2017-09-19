@@ -356,7 +356,7 @@ func addNodesForLabelOption(dockerfile *parser.Node, labels map[string]string) {
 // coming from the query parameter of the same name.
 //
 // TODO: Remove?
-func BuildFromConfig(config *container.Config, changes []string) (*container.Config, error) {
+func BuildFromConfig(config *container.Config, changes []string, os string) (*container.Config, error) {
 	if len(changes) == 0 {
 		return config, nil
 	}
@@ -393,6 +393,7 @@ func BuildFromConfig(config *container.Config, changes []string) (*container.Con
 	dispatchRequest := newDispatchRequest(b, dockerfile.EscapeToken, nil, newBuildArgs(b.options.BuildArgs), newStagesBuildResults())
 	dispatchRequest.state.runConfig = config
 	dispatchRequest.state.imageID = config.Image
+	dispatchRequest.state.operatingSystem = os
 	for _, cmd := range commands {
 		err := dispatch(dispatchRequest, cmd)
 		if err != nil {
