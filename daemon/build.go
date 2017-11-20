@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/pkg/containerfs"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/stringid"
+	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/registry"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -175,6 +176,9 @@ func (daemon *Daemon) pullForBuilder(ctx context.Context, name string, authConfi
 // leaking of layers.
 func (daemon *Daemon) GetImageAndReleasableLayer(ctx context.Context, refOrID string, opts backend.GetImageAndLayerOptions) (builder.Image, builder.ReleaseableLayer, error) {
 	if refOrID == "" {
+		if !system.IsOSSupported(opts.OS) {
+			return nil, nil, system.ErrNotSupportedOperatingSystem
+		}
 		layer, err := newReleasableLayerForImage(nil, daemon.layerStores[opts.OS])
 		return nil, layer, err
 	}
@@ -186,6 +190,9 @@ func (daemon *Daemon) GetImageAndReleasableLayer(ctx context.Context, refOrID st
 		}
 		// TODO: shouldn't we error out if error is different from "not found" ?
 		if image != nil {
+			if !system.IsOSSupported(image.OperatingSystem()) {
+				return nil, nil, system.ErrNotSupportedOperatingSystem
+			}
 			layer, err := newReleasableLayerForImage(image, daemon.layerStores[image.OperatingSystem()])
 			return image, layer, err
 		}
@@ -194,6 +201,9 @@ func (daemon *Daemon) GetImageAndReleasableLayer(ctx context.Context, refOrID st
 	image, err := daemon.pullForBuilder(ctx, refOrID, opts.AuthConfig, opts.Output, opts.OS)
 	if err != nil {
 		return nil, nil, err
+	}
+	if !system.IsOSSupported(image.OperatingSystem()) {
+		return nil, nil, system.ErrNotSupportedOperatingSystem
 	}
 	layer, err := newReleasableLayerForImage(image, daemon.layerStores[image.OperatingSystem()])
 	return image, layer, err

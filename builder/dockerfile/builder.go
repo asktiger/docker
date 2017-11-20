@@ -357,6 +357,9 @@ func addNodesForLabelOption(dockerfile *parser.Node, labels map[string]string) {
 //
 // TODO: Remove?
 func BuildFromConfig(config *container.Config, changes []string, os string) (*container.Config, error) {
+	if !system.IsOSSupported(os) {
+		return nil, validationError{system.ErrNotSupportedOperatingSystem}
+	}
 	if len(changes) == 0 {
 		return config, nil
 	}
